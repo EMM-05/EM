@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hospital Patient List</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+    }
+
+    header {
+      background-color: #0a4275;
+      color: white;
+      padding: 20px 40px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"], input[type="file"] {
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      background-color: #0a4275;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f8fafc;
+    }
+
+    #resultTable {
+      display: none;
+    }
+
+    #noResultMsg {
+      display: none;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #b91c1c;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 20px;
+      display: block;
+      text-align: left;
+      font-size: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏥 Patient Management System</h1>
+  </header>
+
+  <div class="container">
+    <label class="label">📂 Upload Excel File (.xlsx)</label>
+    <input type="file" id="excelFile" accept=".xlsx" />
+
+    <label class="label">🔍 Search Patient Name</label>
+    <input type="text" id="searchInput" placeholder="Enter patient name..." onkeyup="filterTable()" />
+
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>Patient Name</th>
+          <th>Patient Number</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Data goes here -->
+      </tbody>
+    </table>
+
+    <div id="noResultMsg">❌ No patient found.</div>
+  </div>
+
+  <script>
+    let nameData = [];
+
+    document.getElementById('excelFile').addEventListener('change', function (e) {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        // Use default header if no headers in file
+        nameData = XLSX.utils.sheet_to_json(sheet, { header: ["Name", "Number"], range: 0 });
+
+        populateTable(nameData);
+      };
+      reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    function populateTable(data) {
+      const table = document.getElementById('resultTable');
+      const tbody = document.getElementById('tableBody');
+      const noResultMsg = document.getElementById('noResultMsg');
+      tbody.innerHTML = ""; // Clear previous rows
+
+      data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${item.Name}</td><td>${item.Number}</td>`;
+        tbody.appendChild(row);
+      });
+
+      table.style.display = "table";
+      noResultMsg.style.display = "none";
+    }
+
+    function filterTable() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#tableBody tr");
+      const noResultMsg = document.getElementById("noResultMsg");
+
+      let matchFound = false;
+
+      rows.forEach(row => {
+        const name = row.cells[0].textContent.toLowerCase();
+        if (name.includes(input)) {
+          row.style.display = "";
+          matchFound = true;
+        } else {
+          row.style.display = "none";
+        }
+      });
+
+      noResultMsg.style.display = matchFound ? "none" : "block";
+    }
+  </script>
+
+</body>
+</html>
